@@ -1,0 +1,5 @@
+name: Reinforce
+version: @version@
+main: pw.illusion.reinforge.Reinforce
+depend: [Illusion.Core]
+api-version: 1.13
