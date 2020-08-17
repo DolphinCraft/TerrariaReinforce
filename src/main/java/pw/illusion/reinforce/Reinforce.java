@@ -300,7 +300,13 @@ public final class Reinforce extends JavaPlugin {
                     //Start
                     Session sess = new Session(itemInHand.hashCode(), PriceUtil.calcPrice(itemInHand));
                     Session.sessionMap.put(player.getUniqueId(), sess);
-                    player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price));
+                    String name;
+                    if (itemInHand.getItemMeta().hasDisplayName()) {
+                        name = itemInHand.getItemMeta().getDisplayName();
+                    } else {
+                        name = itemInHand.getItemMeta().getLocalizedName();
+                    }
+                    player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price, name));
                     return true;
                 }
             } else {
