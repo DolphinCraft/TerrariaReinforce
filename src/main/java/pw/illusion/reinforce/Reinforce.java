@@ -92,6 +92,13 @@ public final class Reinforce extends JavaPlugin {
         for (Field field : Config.Lang.class.getFields()) {
             field.set(Config.inst.lang, ((String) field.get(Config.inst.lang)).replaceAll("&", String.valueOf(ChatColor.COLOR_CHAR)));
         }
+        if (Config.inst.firstRun) {
+            Log.info("Add your modifier first XD");
+            Config.inst.firstRun = false;
+            Config.inst.saveConfig();
+            this.setEnabled(false);
+            return;
+        }
         Log.info("Initializing ScriptEngine..");
         ScriptEngineManager scm = new ScriptEngineManager();
         scriptEngine = scm.getEngineByName("JavaScript");
@@ -104,6 +111,7 @@ public final class Reinforce extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Config.inst.saveConfig();
         // Plugin shutdown logic
     }
 
@@ -256,13 +264,13 @@ public final class Reinforce extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 1) {
+        if (args.length == 0) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 ItemStack itemInHand = player.getEquipment().getItemInMainHand();
                 if (Session.sessionMap.containsKey(player.getUniqueId())) {
                     Session session = Session.sessionMap.get(player.getUniqueId());
-                    if (itemInHand == null || itemInHand.hashCode() != session.targetedItemHash) {
+                    if (itemInHand.hashCode() != session.targetedItemHash) {
                         player.sendMessage(Config.inst.lang.dont_move_your_sword_away);
                         return true;
                     }
@@ -294,9 +302,13 @@ public final class Reinforce extends JavaPlugin {
                 sender.sendMessage("Not a player.");
             }
         }
-        if (args[1].equals("reload")) {
+        if (args[0].equals("reload")) {
             Config.inst = (Config) Config.inst.saveDefaultOrLoad();
             sender.sendMessage("Reloaded.");
+        }
+        if (args[0].equals("clear")) {
+            Player player = (Player) sender;
+            player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
         }
         return false;
     }

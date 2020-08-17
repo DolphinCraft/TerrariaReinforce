@@ -13,6 +13,7 @@ public class Config extends JsonConfig {
     public boolean enableFail = false;
     public String ecoExpr = "%mat+%ench+%rand";
     public int randMin = 100;
+    public boolean firstRun = true;
     public int randMax = 1000;
     public List<Modifier> modifiers = new ArrayList<>();
     public List<Price> materialOffsets = new ArrayList<>();
