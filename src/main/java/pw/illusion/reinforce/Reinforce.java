@@ -188,6 +188,11 @@ public final class Reinforce extends JavaPlugin {
         } else {
             itemMeta.setLore(newLores);
         }
+        if (itemMeta.hasDisplayName()) {
+            itemMeta.setDisplayName(mod.displayName + " " + itemMeta.getDisplayName());
+        } else {
+            itemMeta.setDisplayName(mod.displayName + " " + itemMeta.getLocalizedName());
+        }
         ItemStack item = itemStack.clone();
         item.setItemMeta(itemMeta);
         return item;
