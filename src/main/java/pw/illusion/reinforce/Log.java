@@ -12,6 +12,7 @@ public class Log {
 
     public static void warn(String mesg) {
         Bukkit.getServer().getConsoleSender().sendMessage(FORMAT.replaceAll("%", ChatColor.RED + mesg));
+
     }
 
     public static void debug(String mesg) {

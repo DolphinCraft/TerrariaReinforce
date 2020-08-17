@@ -1,26 +1,34 @@
 package pw.illusion.reinforce;
 
-import cc.sfclub.util.bukkit.inv.InvBird;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import pw.illusion.reinforce.api.TypeJudge;
 import pw.illusion.reinforce.config.Config;
 import pw.illusion.reinforce.config.Modifier;
-import pw.illusion.reinforce.judge.VanillaJudge_1_13_R2;
+import pw.illusion.reinforce.hook.VaultHook;
+import pw.illusion.reinforce.support.Vanilla_1_13_R2;
 import pw.illusion.reinforce.util.ArmorType;
 import pw.illusion.reinforce.util.ArmorUtil;
+import pw.illusion.reinforce.util.PriceUtil;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.ProviderNotFoundException;
 import java.util.*;
+
 
 public final class Reinforce extends JavaPlugin {
     public static boolean debug = false;
@@ -29,7 +37,8 @@ public final class Reinforce extends JavaPlugin {
     private static Random random;
     @Getter
     private ScriptEngine scriptEngine;
-    private InvBird invBird;
+    @Getter
+    private VaultHook vaultHook;
 
     public static Reinforce getInst() {
         return Reinforce.getPlugin(Reinforce.class);
@@ -39,7 +48,11 @@ public final class Reinforce extends JavaPlugin {
     @Override
     public void onEnable() {
         random = new Random();//tried to keep rng refresh...
-
+        if (!getServer().getPluginManager().isPluginEnabled("Vault")) {
+            Log.warn("Vault not found.");
+            this.setEnabled(false);
+            return;
+        }
         Log.info("Initializing Configuration..");
         File modsDir = new File(getDataFolder(), "mods"); //scan singleton modifier.json
         if (!getDataFolder().mkdir() || !modsDir.mkdir()) {
@@ -80,6 +93,9 @@ public final class Reinforce extends JavaPlugin {
         scriptEngine = scm.getEngineByName("JavaScript");
         Log.info("Initializing Judges..");
         loadDefaultJudges();
+        Log.info("Loading VaultHook");
+        vaultHook = setupEconomy().orElseThrow(ProviderNotFoundException::new);
+
     }
 
     @Override
@@ -212,7 +228,7 @@ public final class Reinforce extends JavaPlugin {
 
     private void loadDefaultJudges() {
         if (getServer().getVersion().contains("1.13")) {
-            registerTypeJudge(new VanillaJudge_1_13_R2());
+            registerTypeJudge(new Vanilla_1_13_R2());
         }
         if (typeJudgeList.isEmpty()) {
             Log.warn("No TypeJudge Registered!!");
@@ -223,5 +239,56 @@ public final class Reinforce extends JavaPlugin {
     public void registerTypeJudge(TypeJudge judge) {
         typeJudgeList.add(judge);
         Log.info("[!] New TypeJudge Registered: " + ChatColor.AQUA + judge.name());
+    }
+
+    private Optional<VaultHook> setupEconomy() {
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return Optional.empty();
+        }
+        Economy econ = rsp.getProvider();
+        return Optional.of(new VaultHook(econ));
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 1) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                ItemStack itemInHand = player.getEquipment().getItemInMainHand();
+                if (Session.sessionMap.containsKey(player.getUniqueId())) {
+                    Session session = Session.sessionMap.get(player.getUniqueId());
+                    if (itemInHand == null || itemInHand.hashCode() != session.targetedItemHash) {
+                        player.sendMessage(Config.inst.lang.dont_move_your_sword_away);
+                        return true;
+                    }
+                    ItemStack itemReinforced = randModifier(itemInHand);
+                    if (itemReinforced == itemInHand) { //pointer compare for check is it really reinforced.
+                        player.sendMessage(Config.inst.lang.failed);
+                    } else {
+                        player.sendMessage(Config.inst.lang.succeed);
+                        player.getEquipment().setItemInMainHand(itemReinforced);
+                    }
+                } else {
+                    //new session
+                    if (ArmorUtil.typeOf(itemInHand) == ArmorType.UNRECOGNIZED) {
+                        player.sendMessage(Config.inst.lang.unrecognized_item);
+                        return true;
+                    }
+                    //Start
+                    Session sess = new Session(itemInHand.hashCode(), PriceUtil.calcPrice(itemInHand));
+                    Session.sessionMap.put(player.getUniqueId(), sess);
+                    player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price));
+                    return true;
+                }
+            } else {
+                sender.sendMessage("Not a player.");
+            }
+        }
+        if (args[1].equals("reload")) {
+            Config.inst = (Config) Config.inst.saveDefaultOrLoad();
+            sender.sendMessage("Reloaded.");
+        }
+        return false;
     }
 }
