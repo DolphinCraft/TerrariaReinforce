@@ -152,7 +152,7 @@ public final class Reinforce extends JavaPlugin {
         ItemMeta itemMeta = itemStack.getItemMeta();
         List<String> newLores = new ArrayList<>();
         newLores.add(Config.inst.loreHeader);
-        newLores.add(Config.inst.lang.loreModTitle.replaceAll("%s", mod.displayName));
+        newLores.add(String.format(Config.inst.lang.loreModTitle, mod.displayName));
         newLores.addAll(mod.lores);
         newLores.add(Config.inst.loreFooter);
         if (itemMeta.hasLore()) {
