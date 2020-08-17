@@ -1,6 +1,6 @@
 name: TerrariaReinforce
 version: @version@
-main: pw.illusion.reinforge.Reinforce
+main: pw.illusion.reinforce.Reinforce
 depend: [Illusion.Core,Vault]
 api-version: 1.13
 commands:
