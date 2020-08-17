@@ -26,6 +26,7 @@ import javax.script.ScriptEngineManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.lang.reflect.Field;
 import java.nio.file.ProviderNotFoundException;
 import java.util.*;
 
@@ -88,6 +89,9 @@ public final class Reinforce extends JavaPlugin {
             e.displayName = ChatColor.translateAlternateColorCodes('&', e.displayName);
             e.lores.forEach(s -> s = ChatColor.translateAlternateColorCodes('&', s));
         });
+        for (Field field : Config.Lang.class.getFields()) {
+            field.set(Config.inst.lang, ((String) field.get(Config.inst.lang)).replaceAll("&", String.valueOf(ChatColor.COLOR_CHAR)));
+        }
         Log.info("Initializing ScriptEngine..");
         ScriptEngineManager scm = new ScriptEngineManager();
         scriptEngine = scm.getEngineByName("JavaScript");
@@ -262,6 +266,11 @@ public final class Reinforce extends JavaPlugin {
                         player.sendMessage(Config.inst.lang.dont_move_your_sword_away);
                         return true;
                     }
+                    if (!vaultHook.getEcon().has(player, session.price)) {
+                        player.sendMessage(Config.inst.lang.money_not_enough);
+                        return true;
+                    }
+                    vaultHook.getEcon().withdrawPlayer(player, session.price);
                     ItemStack itemReinforced = randModifier(itemInHand);
                     if (itemReinforced == itemInHand) { //pointer compare for check is it really reinforced.
                         player.sendMessage(Config.inst.lang.failed);
