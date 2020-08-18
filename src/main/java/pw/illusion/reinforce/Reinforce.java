@@ -268,6 +268,10 @@ public final class Reinforce extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
+            if (!sender.hasPermission("trf.use")) {
+                sender.sendMessage(Config.inst.lang.perm_denied);
+                return true;
+            }
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 ItemStack itemInHand = player.getEquipment().getItemInMainHand();
@@ -312,10 +316,18 @@ public final class Reinforce extends JavaPlugin {
             }
         }
         if (args[0].equals("reload")) {
+            if (!sender.hasPermission("trf.reload")) {
+                sender.sendMessage(Config.inst.lang.perm_denied);
+                return true;
+            }
             Config.inst = (Config) Config.inst.saveDefaultOrLoad();
             sender.sendMessage("Reloaded.");
         }
         if (args[0].equals("clear")) {
+            if (!sender.hasPermission("trf.clear")) {
+                sender.sendMessage(Config.inst.lang.perm_denied);
+                return true;
+            }
             Player player = (Player) sender;
             player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
         }

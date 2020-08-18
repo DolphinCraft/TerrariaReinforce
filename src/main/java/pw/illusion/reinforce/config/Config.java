@@ -28,6 +28,7 @@ public class Config extends JsonConfig {
         public String money_not_enough = "&cYou don't have enough money to do it :(";
         public String dont_move_your_sword_away = "&4&lHey!&r&lCHEATER,DON'T MOVE YOUR ORIGINALLY ITEM AWAY!";
         public String failed = "&cFAILED!Nothing happened but your money.&eTry again?";
+        public String perm_denied = "&cYou don't have permission.";
     }
 
     public Config() {

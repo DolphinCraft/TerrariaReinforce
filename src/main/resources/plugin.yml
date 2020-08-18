@@ -6,5 +6,4 @@ api-version: 1.13
 commands:
   trf:
     description: TerrariaReinforce main cmd
-    permission: trf.use
     usage: /trf
