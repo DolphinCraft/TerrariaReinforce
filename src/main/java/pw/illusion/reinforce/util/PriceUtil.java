@@ -44,14 +44,7 @@ public class PriceUtil {
         }
         if (Config.inst.ecoExpr.contains("%orig")) {
             Modifier modifier = modifierOf(item);
-            if (modifier != null) {
-                for (Price enchOffset : Config.inst.enchantmentOffsets) {
-                    if (modifier.displayName.matches(enchOffset.regex)) {
-                        baseValueOrig = enchOffset.price + baseValueOrig;
-                        break;
-                    }
-                }
-            }
+            baseValueOrig = modifier.price;
         }
         return (double) Reinforce.getInst().getScriptEngine().eval(
                 Config.inst.ecoExpr

@@ -9,6 +9,7 @@ public class Modifier {
     public String displayName;
     public double probability;
     public boolean compensatable;
+    public double price;
     public ArmorType armorType;
     public List<String> lores = new ArrayList<>();
 
