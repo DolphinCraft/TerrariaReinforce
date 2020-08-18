@@ -1,4 +1,5 @@
 # TerrariaReinforce
+[CHINESE | 中文](https://github.com/illusMC/TerrariaReinforce/blob/master/README_ZH.md)  
 Bring terraria's goblin blacksmith to your minecraft.  
 WIP
 
