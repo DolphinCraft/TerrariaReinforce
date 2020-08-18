@@ -65,16 +65,6 @@ public final class Reinforce extends JavaPlugin {
             this.setEnabled(false);
             return;
         }
-        /*Formatting colors*/
-        Config.inst.loreFooter = ChatColor.translateAlternateColorCodes('&', Config.inst.loreFooter);
-        Config.inst.loreHeader = ChatColor.translateAlternateColorCodes('&', Config.inst.loreHeader);
-        Config.inst.modifiers.forEach(e -> {
-            e.displayName = ChatColor.translateAlternateColorCodes('&', e.displayName);
-            e.lores.forEach(s -> s = ChatColor.translateAlternateColorCodes('&', s));
-        });
-        for (Field field : Config.Lang.class.getFields()) {
-            field.set(Config.inst.lang, ((String) field.get(Config.inst.lang)).replaceAll("&", String.valueOf(ChatColor.COLOR_CHAR)));
-        }
         Log.info("Initializing ScriptEngine..");
         ScriptEngineManager scm = new ScriptEngineManager();
         scriptEngine = scm.getEngineByName("JavaScript");
@@ -99,16 +89,11 @@ public final class Reinforce extends JavaPlugin {
      */
     public ItemStack resetModifier(ItemStack item) {
         if (!isValidItem(item)) return item;
+        Log.debug("resetModifier() call");
         ItemMeta itemMeta = item.getItemMeta();
         if (!itemMeta.hasDisplayName()) return item;
-        //clear display name
-        for (Modifier mod : Config.inst.modifiers) {
-            if (itemMeta.getDisplayName().startsWith(mod.displayName)) {
-                itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(mod.displayName + " ", ""));
-                break;
-            }
-        }
         //clear lore
+        String a = "";
         if (itemMeta.hasLore()) {
             Iterator<String> iter = itemMeta.getLore().iterator();
             boolean flag = false;
@@ -117,14 +102,28 @@ public final class Reinforce extends JavaPlugin {
                 if (ele.equals(Config.inst.loreHeader)) {
                     flag = true;
                 }
+                if (debug && flag) Log.debug(ele);
+                if (flag && ele.startsWith(Config.inst.lang.loreModTitle.replaceAll("%s", ""))) {
+                    a = ele.replaceAll(Config.inst.lang.loreModTitle.replaceAll("%s", ""), "");
+                    Log.debug("a:" + a);
+                }
                 if (flag) iter.remove();
                 if (ele.equals(Config.inst.loreFooter)) break;
             }
-
+            Log.debug("resetModifier.setDisplayname " + itemMeta.getDisplayName() + " || " + a);
+            if (itemMeta.hasEnchants()) {
+                itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(a + " ", ChatColor.AQUA + ""));
+            } else {
+                itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(a + " ", ChatColor.WHITE + ""));
+            }
+        } else {
+            return item;
         }
+
         ItemStack itemStack = item.clone();
-        itemStack.setItemMeta(itemMeta);
-        return item;
+        if (!itemStack.setItemMeta(itemMeta)) Log.warn("FAILED TO SET ITEMMETA # ResetModifier");
+        Log.debug("Modified: " + itemStack.getItemMeta().getDisplayName());
+        return itemStack;
     }
 
     /**
@@ -169,7 +168,11 @@ public final class Reinforce extends JavaPlugin {
         if (itemMeta.hasDisplayName()) {
             itemMeta.setDisplayName(mod.displayName + " " + itemMeta.getDisplayName());
         } else {
-            itemMeta.setDisplayName(mod.displayName + " " + LanguageHelper.getItemDisplayName(itemStack, player));
+            if (itemMeta.hasEnchants()) {
+                itemMeta.setDisplayName(mod.displayName + " " + ChatColor.AQUA + LanguageHelper.getItemDisplayName(itemStack, player));
+            } else {
+                itemMeta.setDisplayName(mod.displayName + " " + LanguageHelper.getItemDisplayName(itemStack, player));
+            }
         }
         ItemStack item = itemStack.clone();
         item.setItemMeta(itemMeta);
@@ -283,6 +286,7 @@ public final class Reinforce extends JavaPlugin {
             }
             loadConfig();
             sender.sendMessage("Reloaded.");
+            return true;
         }
         if (args[0].equals("clear")) {
             if (!sender.hasPermission("trf.clear")) {
@@ -291,6 +295,7 @@ public final class Reinforce extends JavaPlugin {
             }
             Player player = (Player) sender;
             player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
+            return true;
         }
         return false;
     }
@@ -321,6 +326,16 @@ public final class Reinforce extends JavaPlugin {
             if (Modifier.isValid(mod)) {
                 Log.info("Loading " + ChatColor.AQUA + mod.displayName + " (from " + file.getName() + ")");
             }
+        }
+        /*Formatting colors*/
+        Config.inst.loreFooter = ChatColor.translateAlternateColorCodes('&', Config.inst.loreFooter);
+        Config.inst.loreHeader = ChatColor.translateAlternateColorCodes('&', Config.inst.loreHeader);
+        Config.inst.modifiers.forEach(e -> {
+            e.displayName = ChatColor.translateAlternateColorCodes('&', e.displayName);
+            e.lores.forEach(s -> s = ChatColor.translateAlternateColorCodes('&', s));
+        });
+        for (Field field : Config.Lang.class.getFields()) {
+            field.set(Config.inst.lang, ((String) field.get(Config.inst.lang)).replaceAll("&", String.valueOf(ChatColor.COLOR_CHAR)));
         }
         return true;
     }

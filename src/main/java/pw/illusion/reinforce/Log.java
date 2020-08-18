@@ -17,6 +17,6 @@ public class Log {
 
     public static void debug(String mesg) {
         if (!Reinforce.debug) return;
-        Bukkit.getServer().getConsoleSender().sendMessage(FORMAT.replaceAll("%", "[D] " + ChatColor.UNDERLINE + mesg));
+        Bukkit.getServer().getConsoleSender().sendMessage(FORMAT.replaceAll("%", "[D] " + ChatColor.UNDERLINE + mesg.replaceAll(org.bukkit.ChatColor.COLOR_CHAR + "", "&")));
     }
 }
