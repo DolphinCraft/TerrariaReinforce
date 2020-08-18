@@ -267,6 +267,7 @@ public final class Reinforce extends JavaPlugin {
                         player.sendMessage(Config.inst.lang.succeed);
                         player.getEquipment().setItemInMainHand(itemReinforced);
                     }
+                    return true;
                 } else {
                     //new session
                     if (ArmorUtil.typeOf(itemInHand) == ArmorType.UNRECOGNIZED) {
