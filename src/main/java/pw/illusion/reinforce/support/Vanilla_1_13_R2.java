@@ -2,11 +2,10 @@ package pw.illusion.reinforce.support;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import pw.illusion.reinforce.api.PriceJudge;
 import pw.illusion.reinforce.api.TypeJudge;
 import pw.illusion.reinforce.util.ArmorType;
 
-public class Vanilla_1_13_R2 implements TypeJudge, PriceJudge {
+public class Vanilla_1_13_R2 implements TypeJudge {
     @Override
     public ArmorType typeOf(ItemStack itemStack) {
         Material mat = itemStack.getType();
@@ -26,11 +25,6 @@ public class Vanilla_1_13_R2 implements TypeJudge, PriceJudge {
             return ArmorType.MELEE;
         }
         return ArmorType.UNRECOGNIZED;
-    }
-
-    @Override
-    public double priceOf(ItemStack itemStack) {
-        return 0;
     }
 
     @Override
