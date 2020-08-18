@@ -109,7 +109,7 @@ public final class Reinforce extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        Config.inst.saveConfig();
+        //Config.inst.saveConfig();
         // Plugin shutdown logic
     }
 
