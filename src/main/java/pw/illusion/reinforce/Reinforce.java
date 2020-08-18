@@ -16,7 +16,7 @@ import pw.illusion.reinforce.api.TypeJudge;
 import pw.illusion.reinforce.config.Config;
 import pw.illusion.reinforce.config.Modifier;
 import pw.illusion.reinforce.hook.VaultHook;
-import pw.illusion.reinforce.support.Vanilla_1_13_R2;
+import pw.illusion.reinforce.support.Vanilla;
 import pw.illusion.reinforce.util.ArmorType;
 import pw.illusion.reinforce.util.ArmorUtil;
 import pw.illusion.reinforce.util.PriceUtil;
@@ -156,7 +156,6 @@ public final class Reinforce extends JavaPlugin {
      * @param item items that ready to be modified
      * @return modified item or original item.
      */
-    @SuppressWarnings("unused")
     public ItemStack randModifier(ItemStack item) {
         if (ArmorUtil.typeOf(item) == ArmorType.UNRECOGNIZED) return item;
         ItemStack result = item;
@@ -241,13 +240,7 @@ public final class Reinforce extends JavaPlugin {
         return (itemStack.getItemMeta().hasLore() && itemStack.getItemMeta().getLore().contains(Config.inst.loreHeader) && itemStack.getItemMeta().getLore().contains(Config.inst.loreFooter));
     }
     private void loadDefaultJudges() {
-        if (getServer().getVersion().contains("1.13")) {
-            registerTypeJudge(new Vanilla_1_13_R2());
-        }
-        if (typeJudgeList.isEmpty()) {
-            Log.warn("No TypeJudge Registered!!");
-            Log.warn("THIS MAY MEANS YOUR MINECRAFT VERSION IS UNSUPPORTED! (" + getServer().getBukkitVersion() + ")");
-        }
+        registerTypeJudge(new Vanilla());
     }
 
     public void registerTypeJudge(TypeJudge judge) {

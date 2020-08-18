@@ -44,13 +44,14 @@ public class PriceUtil {
         }
         if (Config.inst.ecoExpr.contains("%orig")) {
             Modifier modifier = modifierOf(item);
-            baseValueOrig = modifier.price;
+            baseValueOrig = modifier.price + baseValueOrig;
         }
         return (double) Reinforce.getInst().getScriptEngine().eval(
                 Config.inst.ecoExpr
                         .replaceAll("%rand", rn + "")
                         .replaceAll("%mat", baseValueMat + "")
                         .replaceAll("%ench", baseValueEnch + "")
+                        .replaceAll("%orig", baseValueOrig + "")
         );
     }
 
