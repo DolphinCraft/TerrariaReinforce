@@ -55,31 +55,7 @@ public final class Reinforce extends JavaPlugin {
             return;
         }
         Log.info("Initializing Configuration..");
-        File modsDir = new File(getDataFolder(), "mods"); //scan singleton modifier.json
-        getDataFolder().mkdir();
-        modsDir.mkdir();
-        Config.inst = (Config) new Config().saveDefaultOrLoad();
-        /* Checking Configuration*/
-        if (Config.inst.loreHeader == null
-                || Config.inst.loreHeader.isEmpty()
-                || Config.inst.loreFooter == null
-                || Config.inst.loreFooter.isEmpty()) {
-            Log.warn("LoreHeader or LoreFooter can't be null!");
-            this.setEnabled(false);
-            return;
-        }
-        if (Config.inst.loreFooter.equals(Config.inst.loreHeader)) {
-            Log.warn("LoreHeader is equals to LoreFooter");
-            this.setEnabled(false);
-            return;
-        }
-        for (File file : modsDir.listFiles(file -> file.getName().endsWith(".json"))) {
-            Log.debug("Loading File: " + file.getName());
-            Modifier mod = gson.fromJson(new BufferedReader(new FileReader(file)), Modifier.class);
-            if (Modifier.isValid(mod)) {
-                Log.info("Loading " + ChatColor.AQUA + mod.displayName + " (from " + file.getName() + ")");
-            }
-        }
+        if (!loadConfig()) return;
         if (Config.inst.firstRun) {
             Log.info("Add your modifier first XD");
             Config.inst.firstRun = false;
@@ -295,7 +271,7 @@ public final class Reinforce extends JavaPlugin {
                 sender.sendMessage(Config.inst.lang.perm_denied);
                 return true;
             }
-            Config.inst = (Config) Config.inst.saveDefaultOrLoad();
+            loadConfig();
             sender.sendMessage("Reloaded.");
         }
         if (args[0].equals("clear")) {
@@ -307,5 +283,35 @@ public final class Reinforce extends JavaPlugin {
             player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
         }
         return false;
+    }
+
+    @SneakyThrows
+    private boolean loadConfig() {
+        File modsDir = new File(getDataFolder(), "mods"); //scan singleton modifier.json
+        getDataFolder().mkdir();
+        modsDir.mkdir();
+        Config.inst = (Config) new Config().saveDefaultOrLoad();
+        /* Checking Configuration*/
+        if (Config.inst.loreHeader == null
+                || Config.inst.loreHeader.isEmpty()
+                || Config.inst.loreFooter == null
+                || Config.inst.loreFooter.isEmpty()) {
+            Log.warn("LoreHeader or LoreFooter can't be null!");
+            this.setEnabled(false);
+            return false;
+        }
+        if (Config.inst.loreFooter.equals(Config.inst.loreHeader)) {
+            Log.warn("LoreHeader is equals to LoreFooter");
+            this.setEnabled(false);
+            return false;
+        }
+        for (File file : modsDir.listFiles(file -> file.getName().endsWith(".json"))) {
+            Log.debug("Loading File: " + file.getName());
+            Modifier mod = gson.fromJson(new BufferedReader(new FileReader(file)), Modifier.class);
+            if (Modifier.isValid(mod)) {
+                Log.info("Loading " + ChatColor.AQUA + mod.displayName + " (from " + file.getName() + ")");
+            }
+        }
+        return true;
     }
 }
