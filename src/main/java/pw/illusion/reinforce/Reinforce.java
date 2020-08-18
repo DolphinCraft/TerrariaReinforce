@@ -34,7 +34,7 @@ import java.util.*;
 
 
 public final class Reinforce extends JavaPlugin {
-    public static boolean debug = true;
+    public static boolean debug = false;
     public List<TypeJudge> typeJudgeList = new ArrayList<>();
     private static final Gson gson = new Gson();
     private static Random random;
