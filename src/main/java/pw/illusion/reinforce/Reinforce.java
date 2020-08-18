@@ -201,34 +201,16 @@ public final class Reinforce extends JavaPlugin {
      * @return modifier
      */
     private Optional<Modifier> selectRandomModifier(ItemStack item) {
+        int rn = random.nextInt(100) + 1; //rn (0~99)+1 == 1~100
         for (Modifier modifier : Config.inst.modifiers) {
             if (modifier.armorType != ArmorUtil.typeOf(item)) continue;
-            int rn = random.nextInt(100) + 1; //rn (0~99)+1 == 1~100
             if (modifier.probability < rn) {
                 //hit
                 return Optional.of(modifier);
             }
         }
-        //didn't hit any modifier
-        if (Config.inst.enableFail) {
-            return Optional.empty();
-        }
-        int counter = 0;
-        while (true) {
-            counter++;
-            int rn = random.nextInt(Config.inst.modifiers.size());
-            Modifier mod = Config.inst.modifiers.get(rn);
-            if (counter > 20) {
-                Log.warn("RandomModifier.Encourage executed 21 times!!");
-                Log.warn("OMG WHY THIS PLAYER SO UNLUCKY?");
-                Log.warn("OR YOUR CONFIGURATION HAVE NOTHING COMPENSATABLE,UNKNOWN ARMORTYPE?");
-                Log.warn("RETURN " + mod.displayName);
-            }
-            if (mod.armorType != ArmorUtil.typeOf(item)) continue;
-            if (mod.compensatable) {
-                return Optional.of(mod);
-            }
-        }
+        return Optional.empty();
+        //todo Encourage
     }
 
     /**

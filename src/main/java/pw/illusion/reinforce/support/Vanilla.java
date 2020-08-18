@@ -33,6 +33,6 @@ public class Vanilla implements TypeJudge {
 
     @Override
     public String name() {
-        return "1.13.2 and below";
+        return "Minecraft";
     }
 }
