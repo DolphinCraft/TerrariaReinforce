@@ -240,7 +240,6 @@ public final class Reinforce extends JavaPlugin {
     public boolean isValidItem(ItemStack itemStack) {
         return (itemStack.getItemMeta().hasLore() && itemStack.getItemMeta().getLore().contains(Config.inst.loreHeader) && itemStack.getItemMeta().getLore().contains(Config.inst.loreFooter));
     }
-
     private void loadDefaultJudges() {
         if (getServer().getVersion().contains("1.13")) {
             registerTypeJudge(new Vanilla_1_13_R2());
