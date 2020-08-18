@@ -1,10 +1,12 @@
 package pw.illusion.reinforce;
 
 import com.google.gson.Gson;
+import com.meowj.langutils.lang.LanguageHelper;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -32,7 +34,7 @@ import java.util.*;
 
 
 public final class Reinforce extends JavaPlugin {
-    public static boolean debug = false;
+    public static boolean debug = true;
     public List<TypeJudge> typeJudgeList = new ArrayList<>();
     private static final Gson gson = new Gson();
     private static Random random;
@@ -129,15 +131,18 @@ public final class Reinforce extends JavaPlugin {
      * Give buff to item
      * Do nothing(return original item) when selectRandomModifier return null or unknown armortype.
      *
-     * @param item items that ready to be modified
+     * @param item   items that ready to be modified
+     * @param player who?
      * @return modified item or original item.
      */
-    public ItemStack randModifier(ItemStack item) {
+    public ItemStack randModifier(ItemStack item, Player player) {
         if (ArmorUtil.typeOf(item) == ArmorType.UNRECOGNIZED) return item;
         ItemStack result = item;
         Optional<Modifier> mod = selectRandomModifier(item);
+        Log.debug("Selected..");
         if (mod.isPresent()) { //sorry but i have to use this or use atomic for ifPresent.....
-            result = applyModifier(resetModifier(item), mod.get());
+            Log.debug("Applying..");
+            result = applyModifier(resetModifier(item), mod.get(), player);
         }
         return result;
     }
@@ -149,7 +154,7 @@ public final class Reinforce extends JavaPlugin {
      * @param itemStack item
      * @return modded item
      */
-    public ItemStack applyModifier(ItemStack itemStack, Modifier mod) {
+    public ItemStack applyModifier(ItemStack itemStack, Modifier mod, Player player) {
         ItemMeta itemMeta = itemStack.getItemMeta();
         List<String> newLores = new ArrayList<>();
         newLores.add(Config.inst.loreHeader);
@@ -164,7 +169,7 @@ public final class Reinforce extends JavaPlugin {
         if (itemMeta.hasDisplayName()) {
             itemMeta.setDisplayName(mod.displayName + " " + itemMeta.getDisplayName());
         } else {
-            itemMeta.setDisplayName(mod.displayName + " " + itemMeta.getLocalizedName());
+            itemMeta.setDisplayName(mod.displayName + " " + LanguageHelper.getItemDisplayName(itemStack, player));
         }
         ItemStack item = itemStack.clone();
         item.setItemMeta(itemMeta);
@@ -179,12 +184,14 @@ public final class Reinforce extends JavaPlugin {
     private Optional<Modifier> selectRandomModifier(ItemStack item) {
         int rn = random.nextInt(100) + 1; //rn (0~99)+1 == 1~100
         for (Modifier modifier : Config.inst.modifiers) {
+            Log.debug("Loop: " + gson.toJson(modifier));
             if (modifier.armorType != ArmorUtil.typeOf(item)) continue;
-            if (modifier.probability < rn) {
+            if (modifier.probability > rn) {
                 //hit
                 return Optional.of(modifier);
             }
         }
+        Log.debug("SelectRandom Return Empty");
         return Optional.empty();
         //todo Encourage
     }
@@ -227,6 +234,7 @@ public final class Reinforce extends JavaPlugin {
                 ItemStack itemInHand = player.getEquipment().getItemInMainHand();
                 if (Session.sessionMap.containsKey(player.getUniqueId())) {
                     Session session = Session.sessionMap.get(player.getUniqueId());
+                    Session.sessionMap.remove(player.getUniqueId());
                     if (itemInHand.hashCode() != session.targetedItemHash) {
                         player.sendMessage(Config.inst.lang.dont_move_your_sword_away);
                         return true;
@@ -236,12 +244,14 @@ public final class Reinforce extends JavaPlugin {
                         return true;
                     }
                     vaultHook.getEcon().withdrawPlayer(player, session.price);
-                    ItemStack itemReinforced = randModifier(itemInHand);
+                    ItemStack itemReinforced = randModifier(itemInHand, player);
                     if (itemReinforced == itemInHand) { //pointer compare for check is it really reinforced.
                         player.sendMessage(Config.inst.lang.failed);
+                        player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_DESTROY, 5, 5);
                     } else {
-                        player.sendMessage(Config.inst.lang.succeed);
+                        player.sendMessage(String.format(Config.inst.lang.succeed, itemReinforced.getItemMeta().getDisplayName()));
                         player.getEquipment().setItemInMainHand(itemReinforced);
+                        player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_HIT, 5, 10);
                     }
                     return true;
                 } else {
@@ -257,7 +267,7 @@ public final class Reinforce extends JavaPlugin {
                     if (itemInHand.getItemMeta().hasDisplayName()) {
                         name = itemInHand.getItemMeta().getDisplayName();
                     } else {
-                        name = itemInHand.getItemMeta().getLocalizedName();
+                        name = LanguageHelper.getItemDisplayName(itemInHand, player);
                     }
                     player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price, name));
                     return true;
