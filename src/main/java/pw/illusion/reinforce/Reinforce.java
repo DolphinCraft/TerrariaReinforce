@@ -56,10 +56,8 @@ public final class Reinforce extends JavaPlugin {
         }
         Log.info("Initializing Configuration..");
         File modsDir = new File(getDataFolder(), "mods"); //scan singleton modifier.json
-        if (!getDataFolder().mkdir() || !modsDir.mkdir()) {
-            Log.warn("CANNOT CREATE FOLDER!! PLEASE CHECK PERMISSION!!");
-            return;
-        }
+        getDataFolder().mkdir();
+        modsDir.mkdir();
         Config.inst = (Config) new Config().saveDefaultOrLoad();
         /* Checking Configuration*/
         if (Config.inst.loreHeader == null
@@ -82,6 +80,13 @@ public final class Reinforce extends JavaPlugin {
                 Log.info("Loading " + ChatColor.AQUA + mod.displayName + " (from " + file.getName() + ")");
             }
         }
+        if (Config.inst.firstRun) {
+            Log.info("Add your modifier first XD");
+            Config.inst.firstRun = false;
+            Config.inst.saveConfig();
+            this.setEnabled(false);
+            return;
+        }
         /*Formatting colors*/
         Config.inst.loreFooter = ChatColor.translateAlternateColorCodes('&', Config.inst.loreFooter);
         Config.inst.loreHeader = ChatColor.translateAlternateColorCodes('&', Config.inst.loreHeader);
@@ -91,13 +96,6 @@ public final class Reinforce extends JavaPlugin {
         });
         for (Field field : Config.Lang.class.getFields()) {
             field.set(Config.inst.lang, ((String) field.get(Config.inst.lang)).replaceAll("&", String.valueOf(ChatColor.COLOR_CHAR)));
-        }
-        if (Config.inst.firstRun) {
-            Log.info("Add your modifier first XD");
-            Config.inst.firstRun = false;
-            Config.inst.saveConfig();
-            this.setEnabled(false);
-            return;
         }
         Log.info("Initializing ScriptEngine..");
         ScriptEngineManager scm = new ScriptEngineManager();
