@@ -31,12 +31,10 @@ public class PriceUtil {
             }
         }
         if (Config.inst.ecoExpr.contains("%ench")) {
-            A:
             for (Price enchOffset : Config.inst.enchantmentOffsets) {
                 for (String s : asStrList(item.getEnchantments())) {
                     if (s.matches(enchOffset.regex)) {
                         baseValueEnch = enchOffset.price + baseValueEnch;
-                        break A;
                     }
                 }
             }
