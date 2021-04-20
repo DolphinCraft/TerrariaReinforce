@@ -12,6 +12,7 @@ public class Config extends JsonConfig {
     public String loreFooter = "F=Reinforce==";
     public boolean enableFail = false;
     public String ecoExpr = "%mat+%ench+%rand";
+    public boolean judgeOnceForMaterial = false;
     public int randMin = 100;
     public boolean firstRun = true;
     public int randMax = 1000;

@@ -26,7 +26,9 @@ public class PriceUtil {
             for (Price materialOffset : Config.inst.materialOffsets) {
                 if (item.getType().name().matches(materialOffset.regex)) {
                     baseValueMat = materialOffset.price + baseValueMat;
-                    break;
+                    if (Config.inst.judgeOnceForMaterial) {
+                        break;
+                    }
                 }
             }
         }

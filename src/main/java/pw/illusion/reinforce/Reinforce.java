@@ -99,6 +99,7 @@ public final class Reinforce extends JavaPlugin {
         if (itemMeta.hasLore()) {
             Iterator<String> iter = itemMeta.getLore().iterator();
             boolean flag = false;
+            List<String> newLore = new ArrayList<>();
             while (iter.hasNext()) {
                 String ele = iter.next();
                 if (ele.equals(Config.inst.loreHeader)) {
@@ -106,12 +107,13 @@ public final class Reinforce extends JavaPlugin {
                 }
                 if (debug && flag) Log.debug(ele);
                 if (flag && ele.startsWith(Config.inst.lang.loreModTitle.replaceAll("%s", ""))) {
-                    a = ele.replaceAll(Config.inst.lang.loreModTitle.replaceAll("%s", ""), "");
+                    a = ele.replaceAll(Config.inst.lang.loreModTitle.replaceAll("%s", ""), "").replaceAll(ChatColor.WHITE + "", "");
                     Log.debug("a:" + a);
                 }
-                if (flag) iter.remove();
-                if (ele.equals(Config.inst.loreFooter)) break;
+                if (!flag) newLore.add(ele);
+                if (ele.equals(Config.inst.loreFooter)) flag = false;
             }
+            itemMeta.setLore(newLore);
             Log.debug("resetModifier.setDisplayname " + itemMeta.getDisplayName() + " || " + a);
             if (itemMeta.hasEnchants()) {
                 itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(a + " ", ChatColor.AQUA + ""));
@@ -157,14 +159,17 @@ public final class Reinforce extends JavaPlugin {
      */
     public ItemStack applyModifier(ItemStack itemStack, Modifier mod, Player player) {
         ItemMeta itemMeta = itemStack.getItemMeta();
-        List<String> newLores = new ArrayList<>();
-        newLores.add(Config.inst.loreHeader);
-        newLores.add(String.format(Config.inst.lang.loreModTitle, mod.displayName));
-        newLores.addAll(mod.lores);
-        newLores.add(Config.inst.loreFooter);
         if (itemMeta.hasLore()) {
-            itemMeta.getLore().addAll(newLores);
+            itemMeta.getLore().add(Config.inst.loreHeader);
+            itemMeta.getLore().add(String.format(Config.inst.lang.loreModTitle, mod.displayName));
+            itemMeta.getLore().addAll(mod.lores);
+            itemMeta.getLore().add(Config.inst.loreFooter);
         } else {
+            List<String> newLores = new ArrayList<>();
+            newLores.add(Config.inst.loreHeader);
+            newLores.add(String.format(Config.inst.lang.loreModTitle, mod.displayName));
+            newLores.addAll(mod.lores);
+            newLores.add(Config.inst.loreFooter);
             itemMeta.setLore(newLores);
         }
         if (itemMeta.hasDisplayName()) {
@@ -342,7 +347,7 @@ public final class Reinforce extends JavaPlugin {
             this.setEnabled(false);
             return false;
         }
-        for (File file : modsDir.listFiles(file -> file.getName().endsWith(".json"))) {
+        for (File file : modsDir.listFiles()) {
             Log.debug("Loading File: " + file.getName());
             Modifier mod = gson.fromJson(new BufferedReader(new FileReader(file)), Modifier.class);
             if (Modifier.isValid(mod)) {
@@ -353,6 +358,7 @@ public final class Reinforce extends JavaPlugin {
         Config.inst.loreFooter = ChatColor.translateAlternateColorCodes('&', Config.inst.loreFooter);
         Config.inst.loreHeader = ChatColor.translateAlternateColorCodes('&', Config.inst.loreHeader);
         Config.inst.modifiers.forEach(e -> {
+            Log.info("Loaded: " + e.displayName);
             e.displayName = ChatColor.translateAlternateColorCodes('&', e.displayName);
             e.lores.forEach(s -> s = ChatColor.translateAlternateColorCodes('&', s));
         });
