@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Field;
-import java.nio.file.ProviderNotFoundException;
 import java.util.*;
 
 
@@ -71,7 +70,7 @@ public final class Reinforce extends JavaPlugin {
         Log.info("Initializing Judges..");
         loadDefaultJudges();
         Log.info("Loading VaultHook");
-        vaultHook = setupEconomy().orElseThrow(ProviderNotFoundException::new);
+        vaultHook = setupEconomy().orElseThrow(VaultNotFoundE::new);
 
     }
 
@@ -336,7 +335,7 @@ public final class Reinforce extends JavaPlugin {
         Config.inst.loreFooter = ChatColor.translateAlternateColorCodes('&', Config.inst.loreFooter);
         Config.inst.loreHeader = ChatColor.translateAlternateColorCodes('&', Config.inst.loreHeader);
         Config.inst.modifiers.forEach(e -> {
-            Log.info("Loaded: " + e.displayName);
+            Log.info("Loaded: " + ChatColor.stripColor(e.displayName));
             e.displayName = ChatColor.translateAlternateColorCodes('&', e.displayName);
             e.lores.forEach(s -> s = ChatColor.translateAlternateColorCodes('&', s));
         });

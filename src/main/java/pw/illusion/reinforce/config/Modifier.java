@@ -15,6 +15,6 @@ public class Modifier {
     public List<String> lores = new ArrayList<>();
 
     public static boolean isValid(Modifier modifier) {
-        return (modifier.armorType == null || modifier.displayName.isEmpty() || modifier.lores.size() == 0);
+        return (modifier.armorType != null && !modifier.displayName.isEmpty() && modifier.lores.size() != 0);
     }
 }
