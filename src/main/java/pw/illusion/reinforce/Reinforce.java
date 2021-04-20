@@ -199,7 +199,7 @@ public final class Reinforce extends JavaPlugin {
         int maxProbability = 0;
         Map<Modifier, Integer> modifierRates = new HashMap<>();
         for (Modifier modifier : Config.inst.modifiers) {
-            if (!modifier.armorType.contains(ArmorUtil.typeOf(item))) {
+            if (!modifier.armorType.contains(ArmorUtil.typeOf(item)) && !modifier.armorType.contains(ArmorType.ANY)) {
                 continue;
             }
 

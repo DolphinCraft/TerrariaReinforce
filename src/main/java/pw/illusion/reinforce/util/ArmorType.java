@@ -5,5 +5,6 @@ public enum ArmorType {
     RANGED, //Bow
     MELEE, //Sword
     TRIDENT, //......
+    ANY,
     UNRECOGNIZED
 }
