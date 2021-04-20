@@ -16,7 +16,7 @@ public class PriceUtil {
     private static final Random rng = new Random();
 
     @SneakyThrows
-    public static double calcPrice(ItemStack item) {
+    public static double calcPrice(ItemStack item, boolean discount) {
         if (!Bukkit.getServer().getPluginManager().isPluginEnabled("TerrariaReinforce")) return 0.00;
         double baseValueEnch = 0D;
         double baseValueOrig = 0D;
@@ -46,7 +46,7 @@ public class PriceUtil {
         }
         if (Config.inst.ecoExpr.contains("%orig")) {
             Modifier modifier = modifierOf(item);
-            baseValueOrig = modifier.price + baseValueOrig;
+            if (modifier != null) baseValueOrig = modifier.price + baseValueOrig;
         }
         return (double) Reinforce.getInst().getScriptEngine().eval(
                 Config.inst.ecoExpr
@@ -54,7 +54,7 @@ public class PriceUtil {
                         .replaceAll("%mat", baseValueMat + "")
                         .replaceAll("%ench", baseValueEnch + "")
                         .replaceAll("%orig", baseValueOrig + "")
-        );
+        ) * (discount ? Config.inst.discountPercent : 1);
     }
 
     private static Modifier modifierOf(ItemStack itemStack) {

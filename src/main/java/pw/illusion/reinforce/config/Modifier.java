@@ -8,7 +8,6 @@ import java.util.List;
 public class Modifier {
     public String displayName;
     public double probability;
-    public boolean compensatable;
     public String permission;
     public double price;
     public ArmorType armorType;

@@ -5,7 +5,6 @@ import com.meowj.langutils.lang.LanguageHelper;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public final class Reinforce extends JavaPlugin {
-    public static boolean debug = false;
+    public static boolean debug = true;
     public List<TypeJudge> typeJudgeList = new ArrayList<>();
     private static final Gson gson = new Gson();
     private static Random random;
@@ -60,7 +59,7 @@ public final class Reinforce extends JavaPlugin {
         Log.info("Initializing Configuration..");
         if (!loadConfig()) return;
         if (Config.inst.firstRun) {
-            Log.info("Add your modifier first XD");
+            Log.info("Set your config first XD");
             Config.inst.firstRun = false;
             Config.inst.saveConfig();
             this.setEnabled(false);
@@ -114,11 +113,15 @@ public final class Reinforce extends JavaPlugin {
             }
             itemMeta.setLore(newLore);
             Log.debug("resetModifier.setDisplayname " + itemMeta.getDisplayName() + " || " + a);
-            if (itemMeta.hasEnchants()) {
-                itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(a + " ", ChatColor.AQUA + ""));
-            } else {
-                itemMeta.setDisplayName(itemMeta.getDisplayName().replaceAll(a + " ", ChatColor.WHITE + ""));
+            ChatColor color = itemMeta.hasEnchants() ? ChatColor.AQUA : ChatColor.WHITE;
+            String[] arr = itemMeta.getDisplayName().split(" ");
+            StringBuilder builder = new StringBuilder();
+            for (String s : arr) {
+                if (!s.startsWith(a)) {
+                    builder.append(s).append(' ');
+                }
             }
+            itemMeta.setDisplayName(color + builder.toString().trim());
         } else {
             return item;
         }
@@ -142,7 +145,7 @@ public final class Reinforce extends JavaPlugin {
         ItemStack result = item;
         Optional<Modifier> mod = selectRandomModifier(item, player);
         Log.debug("Selected..");
-        if (mod.isPresent()) { //sorry but i have to use this or use atomic for ifPresent.....
+        if (mod.isPresent()) {
             Log.debug("Applying..");
             result = applyModifier(resetModifier(item), mod.get(), player);
         }
@@ -226,6 +229,7 @@ public final class Reinforce extends JavaPlugin {
     public boolean isValidItem(ItemStack itemStack) {
         return (itemStack.getItemMeta().hasLore() && itemStack.getItemMeta().getLore().contains(Config.inst.loreHeader) && itemStack.getItemMeta().getLore().contains(Config.inst.loreFooter));
     }
+
     private void loadDefaultJudges() {
         registerTypeJudge(new Vanilla());
     }
@@ -282,8 +286,13 @@ public final class Reinforce extends JavaPlugin {
                         player.sendMessage(Config.inst.lang.unrecognized_item);
                         return true;
                     }
+                    if (itemInHand.getAmount() != 1) {
+                        player.sendMessage(Config.inst.lang.stack_of_items_are_denied);
+                        return true;
+                    }
                     //Start
-                    Session sess = new Session(itemInHand.hashCode(), PriceUtil.calcPrice(itemInHand));
+                    boolean discount = DiscountCard.canPlayerDiscount(player);
+                    Session sess = new Session(itemInHand.hashCode(), Math.floor(PriceUtil.calcPrice(itemInHand, discount)));
                     Session.sessionMap.put(player.getUniqueId(), sess);
                     String name;
                     if (itemInHand.getItemMeta().hasDisplayName()) {
@@ -291,30 +300,51 @@ public final class Reinforce extends JavaPlugin {
                     } else {
                         name = LanguageHelper.getItemDisplayName(itemInHand, player);
                     }
-                    player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price, name));
+                    player.sendMessage(String.format(Config.inst.lang.ensure_with_price, sess.price, name) + (discount ? " " + Config.inst.lang.has_discount_card_suffix.replaceAll("%perc%", String.valueOf(Math.floor((1 - Config.inst.discountPercent) * 100))) : ""));
                     return true;
                 }
             } else {
                 sender.sendMessage("Not a player.");
             }
         }
-        if (args[0].equals("reload")) {
-            if (!sender.hasPermission("trf.reload")) {
-                sender.sendMessage(Config.inst.lang.perm_denied);
+        if (sender instanceof Player) {
+            if (args[0].equals("reload")) {
+                if (!sender.hasPermission("trf.reload")) {
+                    sender.sendMessage(Config.inst.lang.perm_denied);
+                    return true;
+                }
+                loadConfig();
+                sender.sendMessage("Reloaded.");
                 return true;
             }
-            loadConfig();
-            sender.sendMessage("Reloaded.");
-            return true;
-        }
-        if (args[0].equals("clear")) {
-            if (!sender.hasPermission("trf.clear")) {
-                sender.sendMessage(Config.inst.lang.perm_denied);
+            if (args[0].equals("clear")) {
+                if (!sender.hasPermission("trf.clear")) {
+                    sender.sendMessage(Config.inst.lang.perm_denied);
+                    return true;
+                }
+                Player player = (Player) sender;
+                player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
                 return true;
             }
-            Player player = (Player) sender;
-            player.getEquipment().setItemInMainHand(resetModifier(player.getEquipment().getItemInMainHand()));
-            return true;
+            if (args[0].equals("getcard")) {
+                if (!sender.hasPermission("trf.getcard")) {
+                    sender.sendMessage(Config.inst.lang.perm_denied);
+                    return true;
+                }
+                Player player = (Player) sender;
+                player.getInventory().addItem(DiscountCard.allocate());
+                return true;
+            }
+            if (args[0].equals("modifiers")) {
+                if (!sender.hasPermission("trf.modifiers")) {
+                    sender.sendMessage(Config.inst.lang.perm_denied);
+                    return true;
+                }
+                Config.inst.modifiers.forEach(e -> sender.sendMessage(e.displayName));
+                return true;
+            }
+        } else {
+            sender.sendMessage("Not a player.");
         }
         return false;
     }
@@ -344,6 +374,7 @@ public final class Reinforce extends JavaPlugin {
             Modifier mod = gson.fromJson(new BufferedReader(new FileReader(file)), Modifier.class);
             if (Modifier.isValid(mod)) {
                 Log.info("Loading " + ChatColor.AQUA + mod.displayName + " (from " + file.getName() + ")");
+                Config.inst.modifiers.add(mod);
             }
         }
         /*Formatting colors*/

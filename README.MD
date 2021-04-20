@@ -7,6 +7,8 @@ WIP
 `/trf` - give a random modifier to your item. (trf.use)  
 `/trf reload` - reload config. (trf.reload)  
 `/trf clear` - clear modifiers from your item. (trf.clear)    
+`/trf getcard` - get discount card. (trf.getcard)
+`/trf modifiers` - get modifier list. (trf.modifiers)
 
 # Configuration
 docs WIP..
