@@ -141,7 +141,7 @@ public final class Reinforce extends JavaPlugin {
     public ItemStack randModifier(ItemStack item, Player player) {
         if (ArmorUtil.typeOf(item) == ArmorType.UNRECOGNIZED) return item;
         ItemStack result = item;
-        Optional<Modifier> mod = selectRandomModifier(item);
+        Optional<Modifier> mod = selectRandomModifier(item, player);
         Log.debug("Selected..");
         if (mod.isPresent()) { //sorry but i have to use this or use atomic for ifPresent.....
             Log.debug("Applying..");
@@ -191,16 +191,20 @@ public final class Reinforce extends JavaPlugin {
      *
      * @return modifier
      */
-    private Optional<Modifier> selectRandomModifier(ItemStack item) {
+    private Optional<Modifier> selectRandomModifier(ItemStack item, Player player) {
         AtomicReference<Modifier> result = new AtomicReference<>();
 
         int maxProbability = 0;
         Map<Modifier, Integer> modifierRates = new HashMap<>();
         for (Modifier modifier : Config.inst.modifiers) {
-            Log.debug("Scan: " + gson.toJson(modifier));
             if (modifier.armorType != ArmorUtil.typeOf(item)) {
                 continue;
             }
+
+            if (!player.hasPermission(modifier.permission)) {
+                continue;
+            }
+
             modifierRates.put(modifier, maxProbability);
             maxProbability += modifier.probability;
         }
@@ -211,17 +215,6 @@ public final class Reinforce extends JavaPlugin {
                 result.set(k);
             }
         });
-
-        Log.debug("SelectRandom Return Empty");
-        if (Config.inst.enableFail) {
-            if (result.get() == null) {
-                for (Modifier modifier : Config.inst.modifiers) {
-                    if (modifier.compensatable) {
-
-                    }
-                }
-            }
-        }
 
         return Optional.ofNullable(result.get());
     }
