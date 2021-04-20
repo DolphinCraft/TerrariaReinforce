@@ -10,7 +10,7 @@ public class Modifier {
     public double probability;
     public String permission;
     public double price;
-    public ArmorType armorType;
+    public List<ArmorType> armorType;
     public List<String> lores = new ArrayList<>();
 
     public static boolean isValid(Modifier modifier) {
