@@ -5,6 +5,7 @@ import com.meowj.langutils.lang.LanguageHelper;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -31,6 +32,7 @@ import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.nio.file.ProviderNotFoundException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public final class Reinforce extends JavaPlugin {
@@ -185,18 +187,38 @@ public final class Reinforce extends JavaPlugin {
      * @return modifier
      */
     private Optional<Modifier> selectRandomModifier(ItemStack item) {
-        int rn = random.nextInt(100) + 1; //rn (0~99)+1 == 1~100
+        AtomicReference<Modifier> result = new AtomicReference<>();
+
+        int maxProbability = 0;
+        Map<Modifier, Integer> modifierRates = new HashMap<>();
         for (Modifier modifier : Config.inst.modifiers) {
-            Log.debug("Loop: " + gson.toJson(modifier));
-            if (modifier.armorType != ArmorUtil.typeOf(item)) continue;
-            if (modifier.probability > rn) {
-                //hit
-                return Optional.of(modifier);
+            Log.debug("Scan: " + gson.toJson(modifier));
+            if (modifier.armorType != ArmorUtil.typeOf(item)) {
+                continue;
+            }
+            modifierRates.put(modifier, maxProbability);
+            maxProbability += modifier.probability;
+        }
+        int rand = random.nextInt(maxProbability);
+
+        modifierRates.forEach((k, v) -> {
+            if (rand >= v && rand < k.probability) {
+                result.set(k);
+            }
+        });
+
+        Log.debug("SelectRandom Return Empty");
+        if (Config.inst.enableFail) {
+            if (result.get() == null) {
+                for (Modifier modifier : Config.inst.modifiers) {
+                    if (modifier.compensatable) {
+
+                    }
+                }
             }
         }
-        Log.debug("SelectRandom Return Empty");
-        return Optional.empty();
-        //todo Encourage
+
+        return Optional.ofNullable(result.get());
     }
 
     /**
