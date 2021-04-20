@@ -5,6 +5,7 @@ import com.meowj.langutils.lang.LanguageHelper;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public final class Reinforce extends JavaPlugin {
@@ -138,7 +140,7 @@ public final class Reinforce extends JavaPlugin {
     public ItemStack randModifier(ItemStack item, Player player) {
         if (ArmorUtil.typeOf(item) == ArmorType.UNRECOGNIZED) return item;
         ItemStack result = item;
-        Optional<Modifier> mod = selectRandomModifier(item);
+        Optional<Modifier> mod = selectRandomModifier(item, player);
         Log.debug("Selected..");
         if (mod.isPresent()) { //sorry but i have to use this or use atomic for ifPresent.....
             Log.debug("Applying..");
@@ -188,19 +190,32 @@ public final class Reinforce extends JavaPlugin {
      *
      * @return modifier
      */
-    private Optional<Modifier> selectRandomModifier(ItemStack item) {
-        int rn = random.nextInt(100) + 1; //rn (0~99)+1 == 1~100
+    private Optional<Modifier> selectRandomModifier(ItemStack item, Player player) {
+        AtomicReference<Modifier> result = new AtomicReference<>();
+
+        int maxProbability = 0;
+        Map<Modifier, Integer> modifierRates = new HashMap<>();
         for (Modifier modifier : Config.inst.modifiers) {
-            Log.debug("Loop: " + gson.toJson(modifier));
-            if (modifier.armorType != ArmorUtil.typeOf(item)) continue;
-            if (modifier.probability > rn) {
-                //hit
-                return Optional.of(modifier);
+            if (modifier.armorType != ArmorUtil.typeOf(item)) {
+                continue;
             }
+
+            if (!player.hasPermission(modifier.permission)) {
+                continue;
+            }
+
+            modifierRates.put(modifier, maxProbability);
+            maxProbability += modifier.probability;
         }
-        Log.debug("SelectRandom Return Empty");
-        return Optional.empty();
-        //todo Encourage
+        int rand = random.nextInt(maxProbability);
+
+        modifierRates.forEach((k, v) -> {
+            if (rand >= v && rand < k.probability) {
+                result.set(k);
+            }
+        });
+
+        return Optional.ofNullable(result.get());
     }
 
     /**
