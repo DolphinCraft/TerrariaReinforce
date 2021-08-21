@@ -11,4 +11,4 @@ WIP
 `/trf modifiers` - get modifier list. (trf.modifiers)
 
 # Configuration
-docs WIP..
+docs WIP.. 
